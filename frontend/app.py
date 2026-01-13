@@ -1,90 +1,114 @@
 import os
 import pandas as pd
 import streamlit as st
+import numpy as np
+from datetime import datetime, timedelta
 
-# --------------------------------------------------
-# PAGE CONFIG
-# --------------------------------------------------
+# ----------------------------------------
+# Page Config
+# ----------------------------------------
 st.set_page_config(
     page_title="Smart Energy Monitoring System",
     page_icon="⚡",
     layout="wide"
 )
 
-# --------------------------------------------------
-# CONSTANTS
-# --------------------------------------------------
+# ----------------------------------------
+# Title
+# ----------------------------------------
+st.markdown("## ⚡ Smart Energy Monitoring System")
+st.caption("Professional IoT Energy Dashboard")
+
+# ----------------------------------------
+# Data file path
+# ----------------------------------------
 DATA_FILE = "data/energy_log.csv"
 
-# --------------------------------------------------
-# HEADER
-# --------------------------------------------------
-st.markdown(
-    """
-    <h1>⚡ Smart Energy Monitoring System</h1>
-    <p style="color: gray;">Professional IoT Energy Dashboard</p>
-    """,
-    unsafe_allow_html=True
-)
+# ----------------------------------------
+# Load or Generate Data
+# ----------------------------------------
+def load_energy_data():
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE)
+        if df.empty:
+            return generate_demo_data()
+        return df
+    else:
+        return generate_demo_data()
 
-# --------------------------------------------------
-# SIDEBAR CONTROLS
-# --------------------------------------------------
-st.sidebar.header("⚙️ Controls")
+def generate_demo_data():
+    timestamps = [
+        datetime.now() - timedelta(minutes=i)
+        for i in range(50, 0, -1)
+    ]
 
-power_threshold = st.sidebar.number_input(
+    voltage = np.random.normal(230, 5, 50)
+    current = np.random.normal(5, 1.5, 50)
+    power = voltage * current
+    energy = np.cumsum(power) / 3600000  # kWh
+
+    return pd.DataFrame({
+        "timestamp": timestamps,
+        "voltage": voltage,
+        "current": current,
+        "power": power,
+        "energy": energy
+    })
+
+# ----------------------------------------
+# Load data
+# ----------------------------------------
+df = load_energy_data()
+
+# ----------------------------------------
+# Sidebar Controls
+# ----------------------------------------
+st.sidebar.header("⚙ Controls")
+
+power_threshold = st.sidebar.slider(
     "High Power Threshold (W)",
-    min_value=100,
+    min_value=500,
     max_value=5000,
-    value=1000,
+    value=2000,
     step=100
 )
 
-filter_option = st.sidebar.selectbox(
-    "Filter data",
-    ["All data", "Last 10 records", "Last 50 records"]
-)
-
-# --------------------------------------------------
-# LOAD DATA SAFELY (CLOUD SAFE)
-# --------------------------------------------------
-if os.path.exists(DATA_FILE):
-    df = pd.read_csv(DATA_FILE)
-else:
-    st.warning("No energy data found yet. Please run the backend to generate data.")
-    df = pd.DataFrame(
-        columns=["timestamp", "voltage", "current", "power", "energy"]
-    )
-
-# --------------------------------------------------
-# HANDLE EMPTY DATA
-# --------------------------------------------------
-if df.empty:
-    st.info("Dashboard is ready. Waiting for energy data...")
-    st.stop()
-
-# --------------------------------------------------
-# FILTER DATA
-# --------------------------------------------------
-if filter_option == "Last 10 records":
-    df = df.tail(10)
-elif filter_option == "Last 50 records":
-    df = df.tail(50)
-
-# --------------------------------------------------
-# LATEST VALUES
-# --------------------------------------------------
+# ----------------------------------------
+# Latest Values
+# ----------------------------------------
 latest = df.iloc[-1]
-total_energy = df["energy"].sum()
 
-# --------------------------------------------------
-# METRICS
-# --------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Voltage (V)", round(float(latest["voltage"]), 2))
-col2.metric("Current (A)", round(float(latest["current"]), 2))
-col3.metric("Power (W)", round(float(latest["power"]), 2))
-col4.metric("Energy (kWh)", round(float(total_energy), 4))
+col1.metric("Voltage (V)", f"{latest['voltage']:.2f}")
+col2.metric("Current (A)", f"{latest['current']:.2f}")
+col3.metric("Power (W)", f"{latest['power']:.2f}")
+col4.metric("Energy (kWh)", f"{latest['energy']:.4f}")
 
-# --------------------------
+# ----------------------------------------
+# Alert
+# ----------------------------------------
+if latest["power"] > power_threshold:
+    st.error("🚨 HIGH ENERGY CONSUMPTION DETECTED")
+else:
+    st.success("✅ Energy consumption is normal")
+
+# ----------------------------------------
+# Charts
+# ----------------------------------------
+st.subheader("📊 Energy Trends")
+
+colA, colB = st.columns(2)
+
+with colA:
+    st.line_chart(df.set_index("timestamp")["power"])
+
+with colB:
+    st.line_chart(df.set_index("timestamp")["energy"])
+
+# ----------------------------------------
+# Footer
+# ----------------------------------------
+st.info("Dashboard running successfully (demo data mode)")
+
+    

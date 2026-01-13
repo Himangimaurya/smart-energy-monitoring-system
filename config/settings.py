@@ -1,18 +1,29 @@
 """
-settings.py
--------------
-This file contains all configuration values used across the project.
+Configuration file for Smart Energy Monitoring System
+
+IMPORTANT:
+- No API keys are hardcoded here
+- All sensitive values are loaded from environment variables
+- This file is SAFE to push to GitHub
 """
+
+import os
+
+# ================== THINGSPEAK CONFIG ==================
+
+# ThingSpeak base URL
+THINGSPEAK_URL = "https://api.thingspeak.com/update"
+
+# Read API key from environment variable (SAFE)
+THINGSPEAK_API_KEY = os.getenv("THINGSPEAK_API_KEY")
+
+# ================== SYSTEM CONFIG ==================
+
+# Time interval (in seconds) between readings
+TIME_INTERVAL = 5
 
 # Electricity unit cost (₹ per kWh)
 UNIT_COST = 6.5
 
-# Power threshold in Watts (above this is considered high usage)
-POWER_THRESHOLD = 1000
-
-# Time interval for simulation (seconds)
-TIME_INTERVAL = 2
-
-# ThingSpeak cloud configuration
-THINGSPEAK_API_KEY = "WXCC5E64JNB78J6V"
-THINGSPEAK_URL = "https://api.thingspeak.com/update"
+# Default power threshold (Watts)
+DEFAULT_POWER_THRESHOLD = 1000

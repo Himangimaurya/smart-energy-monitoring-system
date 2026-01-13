@@ -1,4 +1,16 @@
-venv/
+# 🔐 Environment variables
+.env
+
+# 🐍 Python cache
 __pycache__/
 *.pyc
-.env
+
+# 🧪 Virtual environment
+venv/
+
+# 📊 Generated data files
+data/*.csv
+
+# 🧹 OS / Editor junk
+.DS_Store
+.vscode/
